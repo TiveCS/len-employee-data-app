@@ -1,0 +1,34 @@
+﻿@inject HttpClient http
+
+<div class="mb-3">
+	<label for="unit" class="form-label">Unit Kerja</label>
+	@if (employmentLevels == null)
+	{
+		<p>Memuat data jabatan...</p>
+	}
+	else
+	{
+		<select class="form-select" aria-label="Default select example">
+			<option selected>Pilih jabatan kerja</option>
+			@foreach (var level in employmentLevels)
+			{
+				<option value="@level.Id">@level.Name</option>
+			}
+		</select>
+	}
+</div>
+
+@code {
+	private EmploymentLevel[]? employmentLevels;
+
+	protected override async Task OnInitializedAsync()
+	{
+		employmentLevels = await http.GetFromJsonAsync<EmploymentLevel[]>("api/employment_levels");
+	}
+
+	public class EmploymentLevel
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
+	}
+}

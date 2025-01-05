@@ -1,0 +1,43 @@
+﻿@inject HttpClient http
+
+<div class="mb-3">
+	<label for="unit" class="form-label">Unit Kerja</label>
+	@if (units == null)
+	{
+		<p>Memuat data unit kerja...</p>
+	}
+	else
+	{
+		<select class="form-select" form="@FormName" @bind="Value">
+			<option selected>Pilih unit kerja</option>
+			@foreach (var unit in units)
+			{
+				<option value="@unit.Id">@unit.Name</option>
+			}
+		</select>
+	}
+</div>
+
+@code {
+	private WorkUnit[]? units;
+
+	[Parameter]
+	[SupplyParameterFromForm]
+	public int? Value { get; set; }
+
+	public void OnChange(ChangeEventArgs e) {
+		Value = int.Parse(e.Value!.ToString()!);
+		Console.WriteLine(e.Value);
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		units = await http.GetFromJsonAsync<WorkUnit[]>("api/units");
+	}
+
+	public class WorkUnit
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
+	}
+}
