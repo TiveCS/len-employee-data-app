@@ -36,6 +36,58 @@ namespace api.Repositories
 			return await _context.Employees.ToListAsync();
 		}
 
+		public async Task<IEnumerable<Employee>> GetMany(FilterEmployeeDTO filter)
+		{
+			IQueryable<Employee> query = _context.Employees;
+
+			var hasLimit = filter.Limit.HasValue && filter.Limit.Value > 0;
+			var hasPagination = filter.Page.HasValue && filter.Page.Value > 0;
+
+			if (hasLimit)
+			{
+				query = query.Take(filter.Limit!.Value);
+			}
+
+			if (hasPagination)
+			{
+				query = query.Skip((filter.Page!.Value - 1) * filter.Limit!.Value);
+			}
+
+			if (!string.IsNullOrEmpty(filter.NIK)) {
+				query = query.Where(e => e.NIK.Equals(filter.NIK));
+			}
+
+			if (!string.IsNullOrEmpty(filter.Name))
+			{
+				query = query.Where(e => e.Name.ToLower().Contains(filter.Name.ToLower()));
+			}
+
+			if (filter.Gender != null)
+			{
+				query = query.Where(e => e.Gender == filter.Gender);
+			}
+
+			if (filter.EmploymentLevelId != null && filter.EmploymentLevelId.Count > 0) {
+				query = query.Where(e => filter.EmploymentLevelId.Contains(e.EmploymentLevelId));
+			}
+
+			if (filter.UnitId != null && filter.UnitId.Count > 0)
+			{
+				query = query.Where(e => filter.UnitId.Contains(e.UnitId));
+			}
+
+			if (!string.IsNullOrEmpty(filter.BirthCity)) { 
+				query = query.Where(e => filter.BirthCity.Contains(e.BirthCity));
+			}
+
+			if (filter.Birthday.HasValue)
+			{
+				query = query.Where(e => e.Birthday.Equals(filter.Birthday));
+			}
+
+			return await query.ToListAsync();
+		}
+
 		public async Task<Employee> GetByIdAsync(string id)
 		{
 			return await _context.Employees.Where(e => e.Id.Equals(id))

@@ -19,9 +19,21 @@ namespace api.Controllers
 
 		// GET: api/<EmployeesController>
 		[HttpGet]
-		public Task<IEnumerable<Employee>> Get()
+		public async Task<ActionResult<IEnumerable<Employee>>> Get([FromQuery] FilterEmployeeDTO? filter)
 		{
-			return _employeesRepository.GetAllAsync();
+			try
+			{
+				if (filter != null)
+				{
+					return Ok(await _employeesRepository.GetMany(filter));
+				}
+
+				return Ok(await _employeesRepository.GetAllAsync());
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
 		}
 
 		// GET api/<EmployeesController>/5

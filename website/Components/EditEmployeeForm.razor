@@ -1,0 +1,110 @@
+﻿@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<form method="post" @onsubmit="Submit" @formname="add-employee-form">
+	<div class="row mb-3">
+		<div class="col">
+			<label for="nik" class="form-label">NIK</label>
+			<input class="form-control" id="nik" placeholder="3232011001010001" @bind-value="FormData!.NIK">
+		</div>
+
+		<div class="col">
+			<label for="name" class="form-label">Nama Lengkap</label>
+			<input class="form-control" id="name" placeholder="contoh: Udin Subarjo" @bind-value="FormData!.Name">
+		</div>
+	</div>
+
+	<div class="row mb-3">
+		<div class="col">
+			<label for="birthcity" class="form-label">Tempat Lahir</label>
+			<input class="form-control" id="nik" placeholder="contoh: Jakarta" @bind-value="FormData!.BirthCity">
+		</div>
+
+		<div class="col">
+			<label for="name" class="form-label">Tanggal Lahir</label>
+			<input type="date" class="form-control" id="name" placeholder="contoh: Udin Subarjo" @bind-value="FormData!.Birthday">
+		</div>
+	</div>
+
+	<div class="mb-3">
+		<label for="gender" class="form-label">Jenis Kelamin</label>
+		<div class="form-check">
+			<input class="form-check-input" type="radio" value="@Gender.Male" name="gender" id="gender-male" 
+			@onchange="() => FormData!.Gender = Gender.Male"
+			checked="@(FormData!.Gender == Gender.Male)"
+			>
+			<label class="form-check-label" for="gender-male">
+				Pria
+			</label>
+		</div>
+		<div class="form-check">
+			<input class="form-check-input" type="radio" value="@Gender.Female" name="gender" id="gender-female" 
+			@onchange="() => FormData!.Gender = Gender.Female"
+			checked="@(FormData!.Gender == Gender.Female)"
+			>
+			<label class="form-check-label" for="gender-female">
+				Wanita
+			</label>
+		</div>
+	</div>
+
+	<WorkUnitSelector @bind-CurrentValue="FormData!.UnitId" InitialValue="@Employee!.UnitId" />
+
+	<EmploymentLevelSelector @bind-CurrentValue="FormData!.EmploymentLevelId" InitialValue="@Employee!.EmploymentLevelId" />
+
+	<button type="submit" class="btn btn-primary">
+		Ubah Data Karyawan
+	</button>
+</form>
+
+@code {
+	[SupplyParameterFromForm]
+	private EditEmployeeFormData? FormData { get; set; }
+
+	[Parameter]
+	public string Id { get; set; }
+
+	[Parameter]
+	public required Employee Employee { get; set; }
+
+	protected override void OnParametersSet()
+	{
+		if (Employee != null && (FormData == null || FormData.UnitId != Employee.UnitId))
+		{
+			FormData = new()
+				{
+					NIK = Employee.NIK,
+					Name = Employee.Name,
+					Gender = Employee.Gender,
+					Birthday = Employee.Birthday,
+					BirthCity = Employee.BirthCity,
+					EmploymentLevelId = Employee.EmploymentLevelId,
+					UnitId = Employee.UnitId
+				};
+		}
+	}
+
+	private async Task Submit()
+	{
+		if (FormData == null) return;
+
+		Console.WriteLine(FormData.ToString());
+
+		var res = await http.PutAsJsonAsync<EditEmployeeFormData>($"api/employees/{Id}", FormData);
+
+		if (!res.IsSuccessStatusCode) return;
+
+		NavigationManager.NavigateTo("/");
+	}
+
+	public class EditEmployeeFormData
+	{
+		public string? NIK { get; set; }
+		public string? Name { get; set; }
+		public Gender Gender { get; set; }
+		public DateTime? Birthday { get; set; }
+		public string? BirthCity { get; set; }
+		public int? UnitId { get; set; }
+		public int? EmploymentLevelId { get; set; }
+	}
+}

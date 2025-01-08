@@ -1,15 +1,15 @@
 ﻿@inject HttpClient http
 
 <div class="mb-3">
-	<label for="unit" class="form-label">Unit Kerja</label>
+	<label for="unit" class="form-label">Jabatan</label>
 	@if (employmentLevels == null)
 	{
 		<p>Memuat data jabatan...</p>
 	}
 	else
 	{
-		<select class="form-select" aria-label="Default select example">
-			<option selected>Pilih jabatan kerja</option>
+		<select class="form-select" value="@(CurrentValue?.ToString())" @onchange="HandleChange">
+			<option value="">Pilih jabatan kerja</option>
 			@foreach (var level in employmentLevels)
 			{
 				<option value="@level.Id">@level.Name</option>
@@ -21,14 +21,36 @@
 @code {
 	private EmploymentLevel[]? employmentLevels;
 
+	[Parameter]
+	public int? CurrentValue { get; set; }
+
+	[Parameter]
+	public int? InitialValue { get; set; }
+
+	[Parameter]
+	public EventCallback<int?> CurrentValueChanged { get; set; }
+
+	private async Task HandleChange(ChangeEventArgs e)
+	{
+		var value = e.Value?.ToString();
+		if (string.IsNullOrEmpty(value))
+		{
+			await CurrentValueChanged.InvokeAsync(null);
+		}
+		else if (int.TryParse(value, out int selectedId))
+		{
+			await CurrentValueChanged.InvokeAsync(selectedId);
+		}
+	}
+
 	protected override async Task OnInitializedAsync()
 	{
 		employmentLevels = await http.GetFromJsonAsync<EmploymentLevel[]>("api/employment_levels");
+
+		if (!CurrentValue.HasValue && InitialValue.HasValue)
+		{
+			CurrentValue = InitialValue;
+		}
 	}
 
-	public class EmploymentLevel
-	{
-		public int Id { get; set; }
-		public string Name { get; set; }
-	}
 }

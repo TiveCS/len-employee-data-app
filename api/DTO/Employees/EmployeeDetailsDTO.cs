@@ -10,6 +10,8 @@ namespace api.DTO.Employees
 	{
 
 		public string Id { get; set; }
+
+		public string NIK { get; set; }
 		public string Name { get; set; }
 		public Gender Gender { get; set; }
 		public string BirthCity { get; set; }
@@ -23,6 +25,7 @@ namespace api.DTO.Employees
 		{
 			Id = employee.Id;
 			Name = employee.Name;
+			NIK = employee.NIK;
 			Gender = employee.Gender;
 			BirthCity = employee.BirthCity;
 			Birthday = employee.Birthday;

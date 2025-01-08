@@ -1,5 +1,5 @@
 ﻿@inject HttpClient http
-@inject ILogger<CreateEmployeeForm> Logger
+@inject NavigationManager NavigationManager
 
 <form method="post" @onsubmit="Submit" @formname="add-employee-form" >
 	<div class="row mb-3">
@@ -42,9 +42,9 @@
 		</div>
 	</div>
 
-	<WorkUnitSelector @bind-Value="FormData!.UnitId" />
+	<WorkUnitSelector @bind-CurrentValue="FormData!.UnitId" />
 
-	<EmploymentLevelSelector />
+	<EmploymentLevelSelector @bind-CurrentValue="FormData!.EmploymentLevelId" /> 
 
 	<button type="submit" class="btn btn-primary">
 		Tambah Karyawan
@@ -53,25 +53,21 @@
 
 @code {
 	[SupplyParameterFromForm]
-	private CreateEmployeeForm? FormData { get; set; }
+	private CreateEmployeeFormData? FormData { get; set; }
 
 	protected override void OnInitialized() => FormData ??= new();
 
 	private async Task Submit() {
 		if (FormData == null) return;
 
-		Logger.LogInformation("Data = {FormData}", FormData);
+		var res = await http.PostAsJsonAsync<CreateEmployeeFormData>("api/employees", FormData);
 
-		await http.PostAsJsonAsync<CreateEmployeeForm>("api/employees", FormData);
+		if (!res.IsSuccessStatusCode) return;
 
+		NavigationManager.NavigateTo("/");
 	}
 
-	public enum Gender {
-		Male = 1,
-		Female = 2
-	}
-
-	public class CreateEmployeeForm {
+	public class CreateEmployeeFormData {
 		public string? NIK { get; set; }
 		public string? Name { get; set; }
 		public Gender Gender { get; set; }

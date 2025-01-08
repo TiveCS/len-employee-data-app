@@ -4,12 +4,33 @@ using api.Data;
 using api.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
+// Add logging at the start to see the connection string
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+Console.WriteLine($"Using connection string: {connectionString}");
 
-var connectionString = builder.Configuration.GetConnectionString("EmployeesDbContext") ?? throw new InvalidOperationException("Connection string 'EmployeesDbContext' not found.");
-
-builder.Services.AddDbContext<EmployeesDbContext>(options => 
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-);
+builder.Services.AddDbContext<EmployeesDbContext>(options =>
+{
+	try
+	{
+		options.UseMySql(
+			connectionString,
+			ServerVersion.AutoDetect(connectionString),
+			mysqlOptions =>
+			{
+				mysqlOptions.EnableRetryOnFailure(
+					maxRetryCount: 5,
+					maxRetryDelay: TimeSpan.FromSeconds(30),
+					errorNumbersToAdd: null
+				);
+			}
+		);
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine($"Error configuring MySQL: {ex.Message}");
+		throw;
+	}
+});
 
 // Add services to the container.
 

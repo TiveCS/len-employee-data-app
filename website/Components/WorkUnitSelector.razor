@@ -1,43 +1,54 @@
 ﻿@inject HttpClient http
-
 <div class="mb-3">
-	<label for="unit" class="form-label">Unit Kerja</label>
-	@if (units == null)
-	{
-		<p>Memuat data unit kerja...</p>
-	}
-	else
-	{
-		<select class="form-select" form="@FormName" @bind="Value">
-			<option selected>Pilih unit kerja</option>
-			@foreach (var unit in units)
-			{
-				<option value="@unit.Id">@unit.Name</option>
-			}
-		</select>
-	}
+    <label for="unit" class="form-label">Unit Kerja</label>
+    @if (units == null)
+    {
+        <p>Memuat data unit kerja...</p>
+    }
+    else
+    {
+        <select class="form-select" value="@(CurrentValue?.ToString())" @onchange="HandleChange">
+            <option value="">Pilih unit kerja</option>
+            @foreach (var unit in units)
+            {
+                <option value="@unit.Id">@unit.Name</option>
+            }
+        </select>
+    }
 </div>
 
 @code {
-	private WorkUnit[]? units;
+    private WorkUnit[]? units;
 
-	[Parameter]
-	[SupplyParameterFromForm]
-	public int? Value { get; set; }
+    [Parameter]
+    public int? CurrentValue { get; set; }
 
-	public void OnChange(ChangeEventArgs e) {
-		Value = int.Parse(e.Value!.ToString()!);
-		Console.WriteLine(e.Value);
-	}
+    [Parameter]
+    public int? InitialValue { get; set; }
 
-	protected override async Task OnInitializedAsync()
-	{
-		units = await http.GetFromJsonAsync<WorkUnit[]>("api/units");
-	}
+    [Parameter]
+    public EventCallback<int?> CurrentValueChanged { get; set; }
 
-	public class WorkUnit
-	{
-		public int Id { get; set; }
-		public string Name { get; set; }
-	}
+    private async Task HandleChange(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (string.IsNullOrEmpty(value))
+        {
+            await CurrentValueChanged.InvokeAsync(null);
+        }
+        else if (int.TryParse(value, out int selectedId))
+        {
+            await CurrentValueChanged.InvokeAsync(selectedId);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        units = await http.GetFromJsonAsync<WorkUnit[]>("api/units");
+        if (InitialValue.HasValue && CurrentValue == null)
+        {
+            CurrentValue = InitialValue;
+            await CurrentValueChanged.InvokeAsync(CurrentValue);
+        }
+    }
 }
