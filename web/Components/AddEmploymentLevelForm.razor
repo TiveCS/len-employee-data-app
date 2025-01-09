@@ -1,0 +1,58 @@
+﻿@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<EditForm EditContext="editContext" FormName="AddEmploymentLevel" OnValidSubmit="Submit">
+	<div class="mb-3">
+		<label for="name" class="form-label">Nama Jabatan</label>
+		<input class="form-control" id="name" placeholder="contoh: Junior Software Developer" @bind-value="FormData!.Name">
+		<ValidationMessage For="() => FormData!.Name" />
+	</div>
+
+	<div>
+		<button type="submit" class="btn btn-primary">
+			Tambah Jabatan Kerja
+		</button>
+	</div>
+</EditForm>
+
+@code {
+
+	[SupplyParameterFromForm]
+	private AddEmploymentLevelFormData? FormData { get; set; }
+
+	private EditContext? editContext { get; set; }
+
+	private ValidationMessageStore? messageStore;
+
+	protected override void OnInitialized() {
+		FormData ??= new();
+		editContext = new(FormData);
+
+		editContext.OnValidationRequested += HandleValidationRequested;
+
+		messageStore = new(editContext);
+	}
+
+	private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
+	{
+		messageStore?.Clear();
+
+		if (string.IsNullOrEmpty(FormData!.Name)) {
+			messageStore?.Add(() => FormData.Name, "Nama jabatan kerja diperlukan");
+		}
+	}
+
+	private async Task Submit() {
+		var res = await http.PostAsJsonAsync("api/employment_levels", FormData);
+
+		if (!res.IsSuccessStatusCode) return;
+
+		NavigationManager.NavigateTo("/levels");
+	}
+
+	public class AddEmploymentLevelFormData {
+		
+		public string? Name { get; set; }
+	}
+
+}

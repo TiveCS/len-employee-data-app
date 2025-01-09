@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using api.Data;
 using api.Repositories;
+using EntityFramework.Exceptions.MySQL.Pomelo;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add logging at the start to see the connection string
@@ -23,7 +24,7 @@ builder.Services.AddDbContext<EmployeesDbContext>(options =>
 					errorNumbersToAdd: null
 				);
 			}
-		);
+		).UseExceptionProcessor();
 	}
 	catch (Exception ex)
 	{
@@ -45,7 +46,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -54,6 +54,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 app.UseHttpsRedirection();
 

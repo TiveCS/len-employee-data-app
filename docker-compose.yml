@@ -8,14 +8,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
-      - ConnectionStrings__DefaultConnection=server=db;user=root;password=;database=${DB_NAME}
+      - ConnectionStrings__DefaultConnection=server=db;port=3306;user=root;password=;database=${DB_NAME}
     ports:
       - "8080:80"
-      - "8081:443"
-    depends_on:
-      - db
     networks:
       - pt_len
+    depends_on:
+      - db
+    
 
   db:
     image: mysql:latest
@@ -26,7 +26,6 @@ services:
       - "3306:3306"
     networks:
       - pt_len
-    # Add healthcheck to ensure MySQL is ready before API starts
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s

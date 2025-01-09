@@ -1,0 +1,124 @@
+﻿@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<EditForm EditContext="editContext" FormName="AddWorkHistory" OnValidSubmit="Submit">
+	<div class="mb-3">
+		<label for="company" class="form-label">Nama Perusahaan</label>
+		<input class="form-control" id="company" placeholder="contoh: PT. Len Industri" @bind-value="FormData!.Company">
+		<ValidationMessage For="() => FormData!.Company" />
+	</div>
+
+	<EmployeeSelector @bind-CurrentValue="FormData!.EmployeeId" />
+	<ValidationMessage For="() => FormData!.EmployeeId" />
+
+	<div class="mb-3">
+		<label for="status" class="form-label">Jenis Kepegawaian</label>
+		<div class="form-check">
+			<input class="form-check-input" type="radio" value="@EmploymentStatus.Fulltime" name="status" id="status-fulltime" @onchange="() => FormData!.Status = EmploymentStatus.Fulltime">
+			<label class="form-check-label" for="status-fulltime">
+				Pekerja Tetap
+			</label>
+		</div>
+		<div class="form-check">
+			<input class="form-check-input" type="radio" value="@EmploymentStatus.Contract" name="status" id="status-contract" @onchange="() => FormData!.Status = EmploymentStatus.Contract">
+			<label class="form-check-label" for="status-contract">
+				Kontrak
+			</label>
+		</div>
+		<ValidationMessage For="() => FormData!.Status" />
+	</div>
+
+	<div class="row mb-3">
+		<div class="col">
+			<label for="start" class="form-label">Tanggal Mulai</label>
+			<input type="date" class="form-control" id="start" @bind-value="FormData!.StartDate">
+			<ValidationMessage For="() => FormData!.StartDate" />
+		</div>
+
+		<div class="col">
+			<label for="end" class="form-label">Tanggal Selesai</label>
+			<input type="date" class="form-control" id="end" @bind-value="FormData!.EndDate">
+			<ValidationMessage For="() => FormData!.EndDate" />
+		</div>
+	</div>
+
+	<div>
+		<button type="submit" class="btn btn-primary">
+			Tambah Data Riwayat Kerja
+		</button>
+	</div>
+</EditForm>
+
+@code {
+
+	private EditContext? editContext;
+
+	private ValidationMessageStore? messageStore;
+
+	[SupplyParameterFromForm]
+	private AddWorkHistoryFormData? FormData { get; set; }
+
+	protected override void OnInitialized()
+	{
+		FormData ??= new();
+		editContext = new(FormData);
+
+		editContext.OnValidationRequested += HandleValidationRequested;
+
+		messageStore = new(editContext);
+	}
+
+	private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
+	{
+		messageStore?.Clear();
+
+		if (string.IsNullOrEmpty(FormData!.Company))
+		{
+			messageStore?.Add(() => FormData.Company, "Nama perusahaan diperlukan");
+		}
+
+		if (string.IsNullOrEmpty(FormData!.EmployeeId)) {
+			messageStore?.Add(() => FormData.EmployeeId, "Karyawan perlu dipilih");
+		}
+
+		if (FormData!.Status == null)
+		{
+			messageStore?.Add(() => FormData.Status, "Status kerja perlu dipilih");
+		}
+
+		if (FormData!.StartDate == null) 
+		{
+			messageStore?.Add(() => FormData.StartDate, "Waktu mulai perlu dipilih");
+		}
+
+		if (FormData!.EndDate == null)
+		{
+			messageStore?.Add(() => FormData.EndDate, "Waktu mulai perlu dipilih");
+		}
+	}
+
+	private async Task Submit()
+	{
+		var res = await http.PostAsJsonAsync("api/work_histories", FormData);
+
+		if (!res.IsSuccessStatusCode) return;
+
+		NavigationManager.NavigateTo("/histories");
+	}
+
+
+	public class AddWorkHistoryFormData {
+
+		public string? EmployeeId { get; set; }
+
+		public string? Company { get; set; }
+
+		public EmploymentStatus? Status { get; set; }
+
+		public DateTime? EndDate { get; set; }
+
+		public DateTime? StartDate { get; set; }
+
+	}
+
+}

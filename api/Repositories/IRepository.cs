@@ -13,5 +13,7 @@
 
 		public Task<IEnumerable<TEntity>> GetAllAsync();
 
+		public Task<int> CountAysnc();
+
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using api.DTO.WorkUnits;
+using api.Errors;
 using api.Models;
 using api.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -45,9 +46,9 @@ namespace api.Controllers
 
 				return Ok(result);
 			}
-			catch (InvalidOperationException e)
+			catch (InvalidOperationException)
 			{
-				return NotFound(e.Message);
+				return NotFound(WorkUnitErrors.NotFound);
 			}
 		}
 
@@ -75,9 +76,9 @@ namespace api.Controllers
 
 				return Ok();
 			}
-			catch (InvalidOperationException e)
+			catch (InvalidOperationException)
 			{
-				return NotFound(e.Message);
+				return NotFound(WorkUnitErrors.NotFound);
 			}
 		}
 
@@ -93,7 +94,7 @@ namespace api.Controllers
 			}
 			catch (InvalidOperationException e)
 			{
-				return NotFound(e.Message);
+				return NotFound(WorkUnitErrors.NotFound);
 			}
 		}
 	}

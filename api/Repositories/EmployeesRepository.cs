@@ -36,9 +36,9 @@ namespace api.Repositories
 			return await _context.Employees.ToListAsync();
 		}
 
-		public async Task<IEnumerable<Employee>> GetMany(FilterEmployeeDTO filter)
+		public async Task<IEnumerable<Employee>> GetManyAsync(FilterEmployeeDTO filter)
 		{
-			IQueryable<Employee> query = _context.Employees;
+			IQueryable<Employee> query = _context.Employees.OrderBy(e => e.Name);
 
 			var hasLimit = filter.Limit.HasValue && filter.Limit.Value > 0;
 			var hasPagination = filter.Page.HasValue && filter.Page.Value > 0;
@@ -109,6 +109,11 @@ namespace api.Repositories
 			employee.UnitId = entity.UnitId;
 
 			await _context.SaveChangesAsync();
+		}
+
+		public async Task<int> CountAysnc()
+		{
+			return await _context.Employees.CountAsync();
 		}
 	}
 }

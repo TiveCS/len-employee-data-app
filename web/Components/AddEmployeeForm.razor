@@ -1,0 +1,140 @@
+﻿@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<EditForm EditContext="editContext" FormName="AddEmployee" OnValidSubmit="Submit" >
+	<div class="row mb-3">
+		<div class="col">
+			<label for="nik" class="form-label">NIK</label>
+			<input class="form-control" id="nik" placeholder="3232011001010001" @bind-value="FormData!.NIK">
+			<ValidationMessage For="() => FormData!.NIK" />
+		</div>
+
+		<div class="col">
+			<label for="name" class="form-label">Nama Lengkap</label>
+			<input class="form-control" id="name" placeholder="contoh: Udin Subarjo" @bind-value="FormData!.Name">
+			<ValidationMessage For="() => FormData!.Name" />
+		</div>
+	</div>
+
+	<div class="row mb-3">
+		<div class="col">
+			<label for="birthcity" class="form-label">Tempat Lahir</label>
+			<input class="form-control" id="nik" placeholder="contoh: Jakarta" @bind-value="FormData!.BirthCity">
+			<ValidationMessage For="() => FormData!.BirthCity" />
+		</div>
+
+		<div class="col">
+			<label for="name" class="form-label">Tanggal Lahir</label>
+			<input type="date"  class="form-control" id="name" placeholder="contoh: Udin Subarjo" @bind-value="FormData!.Birthday">
+			<ValidationMessage For="() => FormData!.Birthday" />
+		</div>
+	</div>
+
+	<div class="mb-3">
+		<label for="gender" class="form-label">Jenis Kelamin</label>
+		<div class="form-check">
+			<input class="form-check-input" type="radio" value="@Gender.Male" name="gender" id="gender-male" @onchange="() => FormData!.Gender = Gender.Male">
+			<label class="form-check-label" for="gender-male">
+				Pria
+			</label>
+		</div>
+		<div class="form-check">
+			<input class="form-check-input" type="radio" value="@Gender.Female" name="gender" id="gender-female" @onchange="() => FormData!.Gender = Gender.Female">
+			<label class="form-check-label" for="gender-female">
+				Wanita
+			</label>
+		</div>
+		<ValidationMessage For="() => FormData!.Gender" />
+	</div>
+
+	<WorkUnitSelector @bind-CurrentValue="FormData!.UnitId" />
+	<ValidationMessage For="() => FormData!.UnitId" />
+
+	<EmploymentLevelSelector @bind-CurrentValue="FormData!.EmploymentLevelId" /> 
+	<ValidationMessage For="() => FormData!.EmploymentLevelId" />
+
+	<button type="submit" class="btn btn-primary">
+		Tambah Karyawan
+	</button>
+</EditForm>
+
+@code {
+	[SupplyParameterFromForm]
+	private CreateEmployeeFormData? FormData { get; set; }
+
+	private EditContext? editContext { get; set; }
+	private ValidationMessageStore? messageStore;
+
+	protected override void OnInitialized()
+	{
+		FormData ??= new();
+		editContext = new(FormData);
+
+		editContext.OnValidationRequested += HandleValidationRequested;
+
+		messageStore = new(editContext);
+	}
+
+	private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
+	{
+		messageStore?.Clear();
+
+		if (string.IsNullOrEmpty(FormData!.Name))
+		{
+			messageStore?.Add(() => FormData.Name, "Nama karyawan diperlukan");
+		}
+
+		if (string.IsNullOrEmpty(FormData!.NIK))
+		{
+			messageStore?.Add(() => FormData.NIK, "NIK diperlukan");
+		}
+		if (!string.IsNullOrEmpty(FormData!.NIK) && FormData.NIK.Length != 16)
+		{
+			messageStore?.Add(() => FormData.NIK, "NIK harus memiliki 16 karakter");
+		}
+
+		if (string.IsNullOrEmpty(FormData!.BirthCity))
+		{
+			messageStore?.Add(() => FormData.BirthCity, "Tempat lahir diperlukan");
+		}
+		if (FormData!.Birthday == null)
+		{
+			messageStore?.Add(() => FormData.Birthday, "Tanggal lahir diperlukan");
+		}
+
+		if (FormData!.Gender == null)
+		{
+			messageStore?.Add(() => FormData.Gender, "Jenis Kelamin diperlukan");
+		}
+
+		if (FormData!.UnitId == null)
+		{
+			messageStore?.Add(() => FormData.UnitId, "Unit kerja diperlukan");
+		}
+
+		if (FormData!.EmploymentLevelId == null)
+		{
+			messageStore?.Add(() => FormData.EmploymentLevelId, "Jabatan diperlukan");
+		}
+	}
+
+	private async Task Submit() {
+		if (FormData == null) return;
+
+		var res = await http.PostAsJsonAsync<CreateEmployeeFormData>("api/employees", FormData);
+
+		if (!res.IsSuccessStatusCode) return;
+
+		NavigationManager.NavigateTo("/");
+	}
+
+	public class CreateEmployeeFormData {
+		public string? NIK { get; set; }
+		public string? Name { get; set; }
+		public Gender? Gender { get; set; }
+		public DateTime? Birthday { get; set; }
+		public string? BirthCity { get; set; }
+		public int? UnitId { get; set; }
+		public int? EmploymentLevelId { get; set; }
+	}
+}

@@ -1,0 +1,33 @@
+﻿@page "/units/edit/{id}"
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Unit Kerja</PageTitle>
+
+@if (unit == null)
+{
+	<p>Loading...</p>
+}
+
+@if (unit != null)
+{
+	<EditWorkUnitForm Id="@Id" Unit="@unit" />
+}
+
+@code {
+
+	[Parameter]
+	public string? Id { get; set; }
+
+	private WorkUnit? unit { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		unit = await http.GetFromJsonAsync<WorkUnit>($"api/units/{Id}");
+
+		if (unit == null)
+		{
+			NavigationManager.NavigateTo("/");
+		}
+	}
+}

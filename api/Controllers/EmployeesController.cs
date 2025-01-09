@@ -1,8 +1,12 @@
 ﻿using api.Data;
+using api.DTO;
 using api.DTO.Employees;
+using api.Errors;
 using api.Models;
 using api.Repositories;
+using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc;
+using NuGet.Protocol;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -21,19 +25,17 @@ namespace api.Controllers
 		[HttpGet]
 		public async Task<ActionResult<IEnumerable<Employee>>> Get([FromQuery] FilterEmployeeDTO? filter)
 		{
-			try
-			{
-				if (filter != null)
-				{
-					return Ok(await _employeesRepository.GetMany(filter));
-				}
+			GetManyResultDTO<Employee> result = new() { Entities = [], TotalCount = 0 };
 
-				return Ok(await _employeesRepository.GetAllAsync());
-			}
-			catch (Exception ex)
+			result.TotalCount = await _employeesRepository.CountAysnc();
+			if (filter != null)
 			{
-				return StatusCode(500, $"Internal server error: {ex.Message}");
+				result.Entities = await _employeesRepository.GetManyAsync(filter);
+				return Ok(result);
 			}
+
+			result.Entities = await _employeesRepository.GetAllAsync();
+			return Ok(result);
 		}
 
 		// GET api/<EmployeesController>/5
@@ -43,15 +45,13 @@ namespace api.Controllers
 			try
 			{
 				var employee = await _employeesRepository.GetByIdAsync(id);
-				var result = new EmployeeDetailsDTO();
-
-				result.FromEntity(employee);
+				var result = new EmployeeDetailsDTO().FromEntity(employee);
 
 				return Ok(result);
 			}
-			catch (InvalidOperationException e)
+			catch (InvalidOperationException)
 			{
-				return NotFound(e.Message);
+				return NotFound(EmployeeErrors.NotFound);
 			}
 		}
 
@@ -59,19 +59,35 @@ namespace api.Controllers
 		[HttpPost]
 		public async Task<ActionResult<string>> Post([FromBody] CreateEmployeeDTO data)
 		{
-			var employeeId = await _employeesRepository.CreateAsync(new Employee
+			try
 			{
-				NIK = data.NIK,
-				Name = data.Name,
-				Gender = data.Gender,
-				Birthday = data.Birthday,
-				BirthCity = data.BirthCity,
-				UnitId = data.UnitId,
-				EmploymentLevelId = data.EmploymentLevelId,
-			});
+				var employeeId = await _employeesRepository.CreateAsync(new Employee
+				{
+					NIK = data.NIK,
+					Name = data.Name,
+					Gender = data.Gender,
+					Birthday = data.Birthday,
+					BirthCity = data.BirthCity,
+					UnitId = data.UnitId,
+					EmploymentLevelId = data.EmploymentLevelId,
+				});
 
-			return Ok(employeeId);
-		}
+				return Ok(employeeId);
+			}
+			catch (ReferenceConstraintException e)
+			{
+				var field = e.ConstraintProperties[0];
+
+				if (field == "UnitId") return BadRequest(EmployeeErrors.WorkUnitNotFound);
+				if (field == "EmploymentLevelId") return BadRequest(EmployeeErrors.EmploymentLevelNotFound);
+
+				return BadRequest();
+			}
+			catch(UniqueConstraintException)
+			{
+				return BadRequest(EmployeeErrors.DuplicateNIK);
+			}
+ 		}
 
 		// PUT api/<EmployeesController>/5
 		[HttpPut("{id}")]
@@ -92,9 +108,21 @@ namespace api.Controllers
 
 				return Ok();
 			}
-			catch (InvalidOperationException e)
+			catch (InvalidOperationException)
 			{
-				return NotFound(e.Message);
+				return NotFound(EmployeeErrors.NotFound);
+			}
+			catch (ReferenceConstraintException e) {
+				var field = e.ConstraintProperties[0];
+
+				if (field == "UnitId") return BadRequest(EmployeeErrors.WorkUnitNotFound);
+				if (field == "EmploymentLevelId") return BadRequest(EmployeeErrors.EmploymentLevelNotFound);
+
+				return BadRequest();
+			}
+			catch (UniqueConstraintException)
+			{
+				return BadRequest(EmployeeErrors.DuplicateNIK);
 			}
 		}
 
@@ -107,9 +135,9 @@ namespace api.Controllers
 				await _employeesRepository.DeleteByIdAsync(id);
 				return NoContent();
 			}
-			catch (InvalidOperationException e)
+			catch (InvalidOperationException)
 			{
-				return NotFound(e.Message);
+				return NotFound(EmployeeErrors.NotFound);
 			}
 		}
 	}

@@ -21,7 +21,7 @@ namespace api.DTO.Employees
 		public WorkUnitDTO Unit { get; set; }
 
 
-		public void FromEntity(Employee employee)
+		public EmployeeDetailsDTO FromEntity(Employee employee)
 		{
 			Id = employee.Id;
 			Name = employee.Name;
@@ -50,6 +50,8 @@ namespace api.DTO.Employees
 				StartDate = wh.StartDate,
 				EndDate = wh.EndDate,
 			});
+
+			return this;
 		}
 	}
 }

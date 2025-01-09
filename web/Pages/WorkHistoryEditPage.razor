@@ -1,0 +1,33 @@
+﻿@page "/histories/edit/{id}"
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Riwayat Kerja</PageTitle>
+
+@if (history == null)
+{
+	<p>Loading...</p>
+}
+
+@if (history != null)
+{
+	<EditWorkHistoryForm Id="@Id" History="@history" />
+}
+
+@code {
+
+	[Parameter]
+	public string? Id { get; set; }
+
+	private EmployeeWorkHistory? history { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		history = await http.GetFromJsonAsync<EmployeeWorkHistory>($"api/work_histories/{Id}");
+
+		if (history == null)
+		{
+			NavigationManager.NavigateTo("/");
+		}
+	}
+}

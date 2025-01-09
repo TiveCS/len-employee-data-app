@@ -19,16 +19,16 @@ namespace api.DTO.Employees
 
 		[Required]
 		[DataType(DataType.Date)]
-		public required DateTime Birthday { get; set; }
+		public DateTime Birthday { get; set; }
 
 		[Required]
 		[EnumDataType(typeof(Gender))]
-		public required Gender Gender { get; set; }
+		public Gender Gender { get; set; }
 
 		[Required]
-		public required int EmploymentLevelId { get; set; }
+		public int EmploymentLevelId { get; set; }
 
 		[Required]
-		public required int UnitId { get; set; }
+		public int UnitId { get; set; }
 	}
 }

@@ -17,5 +17,9 @@
 		public string BirthCity { get; set; }
 		public int UnitId { get; set; }
 		public int EmploymentLevelId { get; set; }
+
+		public EmploymentLevel EmploymentLevel { get; set; }
+		public WorkUnit Unit { get; set; }
+		public ICollection<EmployeeWorkHistory> WorkHistories { get; set; }
 	}
 }

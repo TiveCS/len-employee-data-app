@@ -1,0 +1,54 @@
+﻿@inject HttpClient http
+<div class="mb-3">
+    <label for="unit" class="form-label">Unit Kerja</label>
+    @if (units == null)
+    {
+        <p>Memuat data unit kerja...</p>
+    }
+    else
+    {
+        <select class="form-select" value="@(CurrentValue?.ToString())" @onchange="HandleChange">
+            <option value="">Pilih unit kerja</option>
+            @foreach (var unit in units)
+            {
+                <option value="@unit.Id">@unit.Name</option>
+            }
+        </select>
+    }
+</div>
+
+@code {
+    private WorkUnit[]? units;
+
+    [Parameter]
+    public int? CurrentValue { get; set; }
+
+    [Parameter]
+    public int? InitialValue { get; set; }
+
+    [Parameter]
+    public EventCallback<int?> CurrentValueChanged { get; set; }
+
+    private async Task HandleChange(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (string.IsNullOrEmpty(value))
+        {
+            await CurrentValueChanged.InvokeAsync(null);
+        }
+        else if (int.TryParse(value, out int selectedId))
+        {
+            await CurrentValueChanged.InvokeAsync(selectedId);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        units = await http.GetFromJsonAsync<WorkUnit[]>("api/units");
+        if (InitialValue.HasValue && CurrentValue == null)
+        {
+            CurrentValue = InitialValue;
+            await CurrentValueChanged.InvokeAsync(CurrentValue);
+        }
+    }
+}

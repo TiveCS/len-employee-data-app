@@ -1,0 +1,33 @@
+﻿@page "/levels/edit/{id}"
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Jabatan Kerja</PageTitle>
+
+@if (level == null)
+{
+	<p>Loading...</p>
+}
+
+@if (level != null)
+{
+	<EditEmploymentLevelForm Id="@Id" Level="@level" />
+}
+
+@code {
+
+	[Parameter]
+	public string? Id { get; set; }
+
+	private EmploymentLevel? level { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		level = await http.GetFromJsonAsync<EmploymentLevel>($"api/employment_levels/{Id}");
+
+		if (level == null)
+		{
+			NavigationManager.NavigateTo("/");
+		}
+	}
+}

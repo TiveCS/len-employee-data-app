@@ -9,10 +9,12 @@ namespace api.DTO.EmploymentLevels
 		public string Name { get; set; }
 
 
-		public void FromEntity(EmploymentLevel level)
+		public EmploymentLevelDTO FromEntity(EmploymentLevel level)
 		{
 			Id = level.Id;
 			Name = level.Name;
+
+			return this;
 		}
 
 	}

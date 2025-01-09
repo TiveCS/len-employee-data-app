@@ -1,5 +1,7 @@
 ﻿using api.Data;
+using api.DTO.WorkHistories;
 using api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace api.Repositories
 {
@@ -12,29 +14,87 @@ namespace api.Repositories
 			_context = context;
 		}
 
-		public Task<string> CreateAsync(EmployeeWorkHistory entity)
+		public async Task<string> CreateAsync(EmployeeWorkHistory entity)
 		{
-			throw new NotImplementedException();
+			await _context.AddAsync(entity);
+
+			await _context.SaveChangesAsync();
+
+			return entity.Id;
 		}
 
-		public Task DeleteByIdAsync(string id)
+		public async Task DeleteByIdAsync(string id)
 		{
-			throw new NotImplementedException();
+			await _context.WorkHistories.Where(e => e.Id == id).ExecuteDeleteAsync();
 		}
 
-		public Task<IEnumerable<EmployeeWorkHistory>> GetAllAsync()
+		public async Task<IEnumerable<EmployeeWorkHistory>> GetAllAsync()
 		{
-			throw new NotImplementedException();
+			return await _context.WorkHistories.Include(e => e.Employee).ToListAsync();
 		}
 
-		public Task<EmployeeWorkHistory> GetByIdAsync(string id)
+		public async Task<IEnumerable<EmployeeWorkHistory>> GetManyAsync(FilterWorkHistoryDTO filter)
 		{
-			throw new NotImplementedException();
+			IQueryable<EmployeeWorkHistory> query = _context.WorkHistories
+				.Include(e => e.Employee);
+
+			var hasLimit = filter.Limit.HasValue && filter.Limit.Value > 0;
+			var hasPagination = filter.Page.HasValue && filter.Page.Value > 0;
+
+			if (hasLimit)
+			{
+				query = query.Take(filter.Limit!.Value);
+			}
+
+			if (hasPagination)
+			{
+				query = query.Skip((filter.Page!.Value - 1) * filter.Limit!.Value);
+			}
+
+			if (!string.IsNullOrEmpty(filter.Company)) {
+				query = query.Where(e => e.Company.ToLower().Contains(filter.Company.ToLower()));
+			}
+
+			if (filter.StartDate.HasValue)
+			{
+				query = query.Where(e => e.StartDate <= filter.StartDate.Value);
+			}
+
+			if (filter.EndDate.HasValue)
+			{
+				query = query.Where(e => e.EndDate <= filter.EndDate.Value);
+			}
+
+			if (filter.Status.HasValue)
+			{
+				query = query.Where(e => e.Status == filter.Status.Value);
+			}
+
+			return await query.ToListAsync();
 		}
 
-		public Task UpdateByIdAsync(string id, EmployeeWorkHistory entity)
+		public async Task<EmployeeWorkHistory> GetByIdAsync(string id)
 		{
-			throw new NotImplementedException();
+			return await _context.WorkHistories
+				.Include(e => e.Employee)
+				.Where(e => e.Id == id).FirstAsync();
+		}
+
+		public async Task UpdateByIdAsync(string id, EmployeeWorkHistory entity)
+		{
+			var history = await _context.WorkHistories.Where(e => e.Id == id).FirstAsync();
+
+			history.Company = entity.Company;
+			history.Status = entity.Status;
+			history.StartDate = entity.StartDate;
+			history.EndDate = entity.EndDate;
+
+			await _context.SaveChangesAsync();
+		}
+
+		public async Task<int> CountAysnc()
+		{
+			return await _context.WorkHistories.CountAsync();
 		}
 	}
 }

@@ -1,0 +1,48 @@
+﻿@inject HttpClient http
+
+<div class="mb-3">
+	<label for="employee" class="form-label">Karyawan</label>
+	@if (employees == null)
+	{
+		<p>Memuat data karyawan...</p>
+	}
+	else
+	{
+		<select class="form-select" value="@CurrentValue" @onchange="HandleChange">
+			<option value="">Pilih unit kerja</option>
+			@foreach (var employee in employees)
+			{
+				<option value="@employee.Id">@employee.Name (@employee.NIK)</option>
+			}
+		</select>
+	}
+</div>
+
+@code {
+
+	[Parameter]
+	public string? CurrentValue { get; set; }
+
+	[Parameter]
+	public string? InitialValue { get; set; }
+
+	[Parameter]
+	public EventCallback<string?> CurrentValueChanged { get; set; }
+
+	private Employee[]? employees { get; set; }
+
+	private async Task HandleChange(ChangeEventArgs e)
+	{
+		await CurrentValueChanged.InvokeAsync(e.Value?.ToString());
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		employees = await http.GetFromJsonAsync<Employee[]>("api/employees");
+
+		if (string.IsNullOrEmpty(CurrentValue) && !string.IsNullOrEmpty(InitialValue))
+		{
+			CurrentValue = InitialValue;
+		}
+	}
+}

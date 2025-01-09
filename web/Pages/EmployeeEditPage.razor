@@ -1,0 +1,31 @@
+﻿@page "/employees/edit/{id}"
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Employee</PageTitle>
+
+@if (employee == null) {
+	<p>Loading...</p>
+}
+
+@if (employee != null) {
+	<EditEmployeeForm Id="@Id" Employee="@employee" />
+}
+
+@code {
+
+	[Parameter]
+	public string? Id { get; set; }
+
+	private Employee? employee { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		employee = await http.GetFromJsonAsync<Employee>($"api/employees/{Id}");
+
+		if (employee == null)
+		{
+			NavigationManager.NavigateTo("/");
+		}
+	}
+}

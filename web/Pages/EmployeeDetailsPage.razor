@@ -1,0 +1,70 @@
+﻿@page "/employees/details/{id}"
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+
+@if (employee == null) {
+	<p>Loading...</p>
+}
+
+@if (employee != null) {
+	<h6>Identitas Karyawan</h6>
+	<div class="mb-3">
+		<p>Nama: @employee.Name</p>
+		<p>NIK: @employee.NIK</p>
+		<p>Jenis Kelamin: @(employee.Gender == Gender.Male ? "Pria" : "Wanita")</p>
+		<p>Tempat / Tanggal Lahir: @employee.BirthCity / @employee.Birthday.ToShortDateString()</p>
+		<p>Unit Kerja: @employee.Unit.Name</p>
+		<p>Jabatan: @employee.EmploymentLevel.Name</p>
+	</div>
+
+	<div class="card">
+		<div class="card-body">
+			<h6>Riwayat Kerja</h6>
+			<table class="table-hover table">
+				<thead class="table-light">
+					<tr>
+						<th scope="col">Perusahaan</th>
+						<th scope="col">Status Kepegawaian</th>
+						<th scope="col">Tanggal Mulai</th>
+						<th scope="col">Tanggal Selesai</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var history in employee.WorkHistories)
+					{
+						<tr>
+							<td>@history.Company</td>
+							<td>@(history.Status == EmploymentStatus.Fulltime ? "Pekerja Tetap" : "Contract")</td>
+							<td>@history.StartDate.ToShortDateString()</td>
+							<td>@history.EndDate.ToShortDateString()</td>
+						</tr>
+					}
+					@if (employee.WorkHistories.Count == 0) {
+						<tr>
+							<td colspan="4" class="py-4 text-center">
+								Tidak ada riwayat kerja
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+}
+
+@code {
+	private Employee? employee { get; set; }
+
+	[Parameter]
+	public string? Id { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		employee = await http.GetFromJsonAsync<Employee>($"api/employees/{Id}");
+
+		if (employee == null) {
+			NavigationManager.NavigateTo("/");
+		}
+	}
+
+}
